@@ -87,7 +87,7 @@ describe("통합 테스트 (Integration Tests)", function () {
             const emptySignature = "0x";
 
             await expect(
-                storageCreditPool.connect(owner).deductCredit(user.address, largeFee, emptySignature)
+                storageCreditPool.connect(owner).deductCredit(user.address, largeFee, emptySignature),
             ).to.be.revertedWith("StorageCreditPool: insufficient balance");
         });
     });
@@ -133,7 +133,7 @@ describe("통합 테스트 (Integration Tests)", function () {
             const contractBalanceBefore = await mockERC20.balanceOf(await paymentContract.getAddress());
 
             await expect(
-                paymentContract.connect(user).payWithSignature(fileId, paymentAmount, nonce, timestamp, signature)
+                paymentContract.connect(user).payWithSignature(fileId, paymentAmount, nonce, timestamp, signature),
             )
                 .to.emit(paymentContract, "PaymentReceived")
                 .withArgs(user.address, fileId, paymentAmount, nonce);
@@ -220,7 +220,7 @@ describe("통합 테스트 (Integration Tests)", function () {
 
             // 같은 서명으로 재시도 (실패해야 함)
             await expect(
-                paymentContract.connect(user).payWithSignature(fileId, paymentAmount, nonce, timestamp, signature)
+                paymentContract.connect(user).payWithSignature(fileId, paymentAmount, nonce, timestamp, signature),
             ).to.be.revertedWith("PaymentContract: nonce already used");
         });
     });
@@ -243,7 +243,7 @@ describe("통합 테스트 (Integration Tests)", function () {
 
             // 크레딧 차감 시도 (실패해야 함)
             await expect(
-                storageCreditPool.connect(owner).deductCredit(user.address, transferFee2, emptySignature)
+                storageCreditPool.connect(owner).deductCredit(user.address, transferFee2, emptySignature),
             ).to.be.revertedWith("StorageCreditPool: insufficient balance");
 
             // x402 결제로 전환
@@ -283,7 +283,7 @@ describe("통합 테스트 (Integration Tests)", function () {
 
             // x402 결제 성공
             await expect(
-                paymentContract.connect(user).payWithSignature(fileId, transferFee2, nonce, timestamp, signature)
+                paymentContract.connect(user).payWithSignature(fileId, transferFee2, nonce, timestamp, signature),
             )
                 .to.emit(paymentContract, "PaymentReceived")
                 .withArgs(user.address, fileId, transferFee2, nonce);
@@ -355,7 +355,7 @@ describe("통합 테스트 (Integration Tests)", function () {
 
             // 4. 추가 차감 시도 (실패해야 함)
             await expect(
-                storageCreditPool.connect(owner).deductCredit(user.address, STORAGE_FEE, emptySignature)
+                storageCreditPool.connect(owner).deductCredit(user.address, STORAGE_FEE, emptySignature),
             ).to.be.revertedWith("StorageCreditPool: insufficient balance");
         });
     });

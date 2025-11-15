@@ -44,7 +44,7 @@ describe("PaymentContract", function () {
         it("✅ PAYMENT_TYPEHASH가 올바르게 설정되어야 함", async function () {
             const typeHash = await paymentContract.PAYMENT_TYPEHASH();
             const expectedTypeHash = ethers.keccak256(
-                ethers.toUtf8Bytes("Payment(string fileId,uint256 amount,uint256 nonce,uint256 timestamp)")
+                ethers.toUtf8Bytes("Payment(string fileId,uint256 amount,uint256 nonce,uint256 timestamp)"),
             );
             expect(typeHash).to.equal(expectedTypeHash);
         });
@@ -52,7 +52,7 @@ describe("PaymentContract", function () {
         it("❌ 잘못된 토큰 주소(0x0)로 배포 시 실패해야 함", async function () {
             const PaymentContractFactory = await ethers.getContractFactory("PaymentContract");
             await expect(
-                PaymentContractFactory.deploy(ethers.ZeroAddress)
+                PaymentContractFactory.deploy(ethers.ZeroAddress),
             ).to.be.revertedWith("PaymentContract: invalid payment token");
         });
     });
@@ -76,7 +76,7 @@ describe("PaymentContract", function () {
 
         it("❌ 0 금액 결제 시 실패해야 함", async function () {
             await expect(
-                paymentContract.connect(payer).payDirect(0)
+                paymentContract.connect(payer).payDirect(0),
             ).to.be.revertedWith("PaymentContract: amount must be greater than 0");
         });
 
@@ -84,7 +84,7 @@ describe("PaymentContract", function () {
             await mockERC20.connect(payer).approve(await paymentContract.getAddress(), 0);
 
             await expect(
-                paymentContract.connect(payer).payDirect(PAYMENT_AMOUNT)
+                paymentContract.connect(payer).payDirect(PAYMENT_AMOUNT),
             ).to.be.reverted;
         });
     });
@@ -130,7 +130,7 @@ describe("PaymentContract", function () {
             const contractBalanceBefore = await mockERC20.balanceOf(await paymentContract.getAddress());
 
             await expect(
-                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, timestamp, signature)
+                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, timestamp, signature),
             )
                 .to.emit(paymentContract, "PaymentReceived")
                 .withArgs(payer.address, fileId, PAYMENT_AMOUNT, nonce);
@@ -169,7 +169,7 @@ describe("PaymentContract", function () {
             const signature = await payer.signTypedData(domain, types, message);
 
             await expect(
-                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, expiredTimestamp, signature)
+                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, expiredTimestamp, signature),
             ).to.be.revertedWith("PaymentContract: signature expired");
         });
 
@@ -202,7 +202,7 @@ describe("PaymentContract", function () {
             const signature = await payer.signTypedData(domain, types, message);
 
             await expect(
-                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, futureTimestamp, signature)
+                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, futureTimestamp, signature),
             ).to.be.revertedWith("PaymentContract: invalid timestamp");
         });
 
@@ -210,7 +210,7 @@ describe("PaymentContract", function () {
             const wrongSignature = await otherUser.signMessage("wrong message");
 
             await expect(
-                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, timestamp, wrongSignature)
+                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, timestamp, wrongSignature),
             ).to.be.revertedWith("PaymentContract: invalid signature");
         });
 
@@ -242,7 +242,7 @@ describe("PaymentContract", function () {
             const signature = await otherUser.signTypedData(domain, types, message);
 
             await expect(
-                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, timestamp, signature)
+                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, timestamp, signature),
             ).to.be.revertedWith("PaymentContract: invalid signature");
         });
 
@@ -277,7 +277,7 @@ describe("PaymentContract", function () {
 
             // 같은 nonce로 재사용 시도 (실패해야 함)
             await expect(
-                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, timestamp, signature)
+                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, nonce, timestamp, signature),
             ).to.be.revertedWith("PaymentContract: nonce already used");
         });
 
@@ -318,7 +318,7 @@ describe("PaymentContract", function () {
             };
             const signature2 = await payer.signTypedData(domain, types, message2);
             await expect(
-                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, 2, newTimestamp, signature2)
+                paymentContract.connect(payer).payWithSignature(fileId, PAYMENT_AMOUNT, 2, newTimestamp, signature2),
             )
                 .to.emit(paymentContract, "PaymentReceived")
                 .withArgs(payer.address, fileId, PAYMENT_AMOUNT, 2);
@@ -351,7 +351,7 @@ describe("PaymentContract", function () {
             const signature = await payer.signTypedData(domain, types, message);
 
             await expect(
-                paymentContract.connect(payer).payWithSignature(fileId, 0, nonce, timestamp, signature)
+                paymentContract.connect(payer).payWithSignature(fileId, 0, nonce, timestamp, signature),
             ).to.be.revertedWith("PaymentContract: amount must be greater than 0");
         });
     });
@@ -426,7 +426,7 @@ describe("PaymentContract", function () {
     describe("verifyPayment - 트랜잭션 검증", function () {
         it("❌ verifyPayment는 항상 revert되어야 함 (오프체인 검증용)", async function () {
             await expect(
-                paymentContract.verifyPayment(ethers.ZeroHash)
+                paymentContract.verifyPayment(ethers.ZeroHash),
             ).to.be.revertedWith("PaymentContract: use off-chain RPC verification");
         });
     });

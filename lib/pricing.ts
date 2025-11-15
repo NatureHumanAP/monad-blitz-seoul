@@ -16,42 +16,42 @@ export const MIN_PAYMENT_UNIT = 0.0001;
  * Calculate daily storage fee for a file
  */
 export function calculateDailyStorageFee(fileSizeInBytes: number): number {
-  const fileSizeInGB = fileSizeInBytes / (1024 * 1024 * 1024);
-  return fileSizeInGB * STORAGE_FEE_PER_GB_PER_DAY;
+    const fileSizeInGB = fileSizeInBytes / (1024 * 1024 * 1024);
+    return fileSizeInGB * STORAGE_FEE_PER_GB_PER_DAY;
 }
 
 /**
  * Calculate monthly storage fee for a file
  */
 export function calculateMonthlyStorageFee(fileSizeInBytes: number): number {
-  return calculateDailyStorageFee(fileSizeInBytes) * 30;
+    return calculateDailyStorageFee(fileSizeInBytes) * 30;
 }
 
 /**
  * Calculate transfer fee for downloading a file
  */
 export function calculateTransferFee(fileSizeInBytes: number): number {
-  const fileSizeInGB = fileSizeInBytes / (1024 * 1024 * 1024);
-  return fileSizeInGB * TRANSFER_FEE_PER_GB;
+    const fileSizeInGB = fileSizeInBytes / (1024 * 1024 * 1024);
+    return fileSizeInGB * TRANSFER_FEE_PER_GB;
 }
 
 /**
  * Calculate how many days a credit balance can cover
  */
 export function calculateDaysCovered(
-  creditBalance: number,
-  totalDailyFee: number
+    creditBalance: number,
+    totalDailyFee: number,
 ): number {
-  if (totalDailyFee === 0) {
-    return Infinity;
-  }
-  return Math.floor(creditBalance / totalDailyFee);
+    if (totalDailyFee === 0) {
+        return Infinity;
+    }
+    return Math.floor(creditBalance / totalDailyFee);
 }
 
 /**
  * Round to minimum payment unit
  */
 export function roundToMinimumUnit(amount: number): number {
-  return Math.ceil(amount / MIN_PAYMENT_UNIT) * MIN_PAYMENT_UNIT;
+    return Math.ceil(amount / MIN_PAYMENT_UNIT) * MIN_PAYMENT_UNIT;
 }
 

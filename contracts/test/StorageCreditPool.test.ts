@@ -44,7 +44,7 @@ describe("StorageCreditPool", function () {
         it("❌ 잘못된 토큰 주소(0x0)로 배포 시 실패해야 함", async function () {
             const StorageCreditPoolFactory = await ethers.getContractFactory("StorageCreditPool");
             await expect(
-                StorageCreditPoolFactory.deploy(ethers.ZeroAddress)
+                StorageCreditPoolFactory.deploy(ethers.ZeroAddress),
             ).to.be.revertedWith("StorageCreditPool: invalid payment token");
         });
     });
@@ -72,13 +72,13 @@ describe("StorageCreditPool", function () {
 
         it("❌ 0 금액 충전 시 실패해야 함", async function () {
             await expect(
-                storageCreditPool.connect(user1).deposit(0)
+                storageCreditPool.connect(user1).deposit(0),
             ).to.be.revertedWith("StorageCreditPool: amount must be greater than 0");
         });
 
         it("❌ approve 없이 충전 시 실패해야 함", async function () {
             await expect(
-                storageCreditPool.connect(user1).deposit(DEPOSIT_AMOUNT)
+                storageCreditPool.connect(user1).deposit(DEPOSIT_AMOUNT),
             ).to.be.revertedWithCustomError(mockERC20, "ERC20InsufficientAllowance");
         });
 
@@ -89,7 +89,7 @@ describe("StorageCreditPool", function () {
             await mockERC20.connect(user1).approve(await storageCreditPool.getAddress(), excessiveAmount);
 
             await expect(
-                storageCreditPool.connect(user1).deposit(excessiveAmount)
+                storageCreditPool.connect(user1).deposit(excessiveAmount),
             ).to.be.revertedWithCustomError(mockERC20, "ERC20InsufficientBalance");
         });
     });
@@ -123,7 +123,7 @@ describe("StorageCreditPool", function () {
 
         it("❌ 0 금액 인출 시 실패해야 함", async function () {
             await expect(
-                storageCreditPool.connect(user1).withdraw(0)
+                storageCreditPool.connect(user1).withdraw(0),
             ).to.be.revertedWith("StorageCreditPool: amount must be greater than 0");
         });
 
@@ -131,13 +131,13 @@ describe("StorageCreditPool", function () {
             const excessiveAmount = DEPOSIT_AMOUNT + ethers.parseEther("1");
 
             await expect(
-                storageCreditPool.connect(user1).withdraw(excessiveAmount)
+                storageCreditPool.connect(user1).withdraw(excessiveAmount),
             ).to.be.revertedWith("StorageCreditPool: insufficient balance");
         });
 
         it("❌ 다른 사용자가 인출 시도 시 실패해야 함", async function () {
             await expect(
-                storageCreditPool.connect(user2).withdraw(ethers.parseEther("1"))
+                storageCreditPool.connect(user2).withdraw(ethers.parseEther("1")),
             ).to.be.revertedWith("StorageCreditPool: insufficient balance");
         });
     });
@@ -162,7 +162,7 @@ describe("StorageCreditPool", function () {
             const emptySignature = "0x";
 
             await expect(
-                storageCreditPool.connect(user1).deductCredit(user1.address, deductAmount, emptySignature)
+                storageCreditPool.connect(user1).deductCredit(user1.address, deductAmount, emptySignature),
             ).to.be.revertedWithCustomError(storageCreditPool, "OwnableUnauthorizedAccount");
         });
 
@@ -171,7 +171,7 @@ describe("StorageCreditPool", function () {
             const emptySignature = "0x";
 
             await expect(
-                storageCreditPool.connect(owner).deductCredit(ethers.ZeroAddress, deductAmount, emptySignature)
+                storageCreditPool.connect(owner).deductCredit(ethers.ZeroAddress, deductAmount, emptySignature),
             ).to.be.revertedWith("StorageCreditPool: invalid wallet address");
         });
 
@@ -179,7 +179,7 @@ describe("StorageCreditPool", function () {
             const emptySignature = "0x";
 
             await expect(
-                storageCreditPool.connect(owner).deductCredit(user1.address, 0, emptySignature)
+                storageCreditPool.connect(owner).deductCredit(user1.address, 0, emptySignature),
             ).to.be.revertedWith("StorageCreditPool: amount must be greater than 0");
         });
 
@@ -188,7 +188,7 @@ describe("StorageCreditPool", function () {
             const emptySignature = "0x";
 
             await expect(
-                storageCreditPool.connect(owner).deductCredit(user1.address, excessiveAmount, emptySignature)
+                storageCreditPool.connect(owner).deductCredit(user1.address, excessiveAmount, emptySignature),
             ).to.be.revertedWith("StorageCreditPool: insufficient balance");
         });
     });
@@ -213,13 +213,13 @@ describe("StorageCreditPool", function () {
 
         it("❌ Owner가 아닌 사용자가 토큰 변경 시 실패해야 함", async function () {
             await expect(
-                storageCreditPool.connect(user1).setPaymentToken(await newMockERC20.getAddress())
+                storageCreditPool.connect(user1).setPaymentToken(await newMockERC20.getAddress()),
             ).to.be.revertedWithCustomError(storageCreditPool, "OwnableUnauthorizedAccount");
         });
 
         it("❌ 잘못된 토큰 주소(0x0)로 변경 시 실패해야 함", async function () {
             await expect(
-                storageCreditPool.connect(owner).setPaymentToken(ethers.ZeroAddress)
+                storageCreditPool.connect(owner).setPaymentToken(ethers.ZeroAddress),
             ).to.be.revertedWith("StorageCreditPool: invalid payment token");
         });
     });
