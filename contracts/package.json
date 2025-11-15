@@ -1,0 +1,41 @@
+{
+    "name": "nano-storage-contracts",
+    "version": "1.0.0",
+    "description": "Nano Storage Smart Contracts",
+    "scripts": {
+        "compile": "hardhat compile",
+        "test": "hardhat test",
+        "test:unit": "hardhat test test/*.test.ts --grep 'StorageCreditPool|PaymentContract'",
+        "test:integration": "hardhat test test/integration.test.ts",
+        "test:coverage": "hardhat coverage",
+        "deploy:testnet": "hardhat run scripts/deploy.ts --network monadTestnet",
+        "deploy:mainnet": "hardhat run scripts/deploy.ts --network monadMainnet",
+        "verify:testnet": "hardhat run scripts/verify.ts --network monadTestnet",
+        "verify:mainnet": "hardhat run scripts/verify.ts --network monadMainnet",
+        "node": "hardhat node"
+    },
+    "devDependencies": {
+        "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
+        "@nomicfoundation/hardhat-ethers": "^3.0.0",
+        "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+        "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+        "@nomicfoundation/hardhat-verify": "^2.0.0",
+        "@typechain/ethers-v6": "^0.5.0",
+        "@typechain/hardhat": "^9.0.0",
+        "@types/chai": "^4.3.11",
+        "@types/mocha": "^10.0.6",
+        "@types/node": "^20.0.0",
+        "chai": "^6.2.1",
+        "ethers": "^6.4.0",
+        "hardhat": "^2.19.0",
+        "hardhat-gas-reporter": "^1.0.8",
+        "solidity-coverage": "^0.8.1",
+        "ts-node": "^10.9.1",
+        "typechain": "^8.3.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@openzeppelin/contracts": "^5.0.0",
+        "dotenv": "^16.0.0"
+    }
+}

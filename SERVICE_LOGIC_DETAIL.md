@@ -40,7 +40,24 @@
   - `upload_date`
   - `expiration_date` (30일 후)
   - `is_prepaid_linked` (FALSE로 초기 설정)
-- **응답**: 다운로드 URL (`/download/{file_id}`) 제공
+- **응답**: 다운로드 URL 및 보관료 안내 정보 제공
+  ```json
+  {
+    "fileId": "...",
+    "downloadUrl": "/download/{file_id}",
+    "storageInfo": {
+      "hasPrepaidStorage": false,
+      "estimatedDeletionDate": "YYYY-MM-DD",  // upload_date + 30일
+      "daysUntilDeletion": 30,
+      "message": "30일 무료 보관 제공. 장기 보관을 원하시면 크레딧을 충전하여 보관료를 활성화해주세요.",
+      "dailyStorageFee": 0.0005,  // 파일 크기 기반 계산
+      "monthlyStorageFee": 0.015
+    }
+  }
+  ```
+- **사용자 안내**:
+  - 보관료 없는 유저 (`is_prepaid_linked = FALSE`): 예상 삭제일(`expiration_date`) 표시
+  - 보관료 활성화 안내: "보관료는 일정 금액을 충전해두면 자동으로 차감됩니다."
 
 ### 2.2. 다운로드 결제 로직 (GET /download/:file_id)
 
@@ -94,24 +111,126 @@
 
 4. **보관료 활성화**
    - 해당 Wallet ID와 연결된 모든 파일의 `is_prepaid_linked` 플래그를 **TRUE**로 설정하여 보관료 자동 차감 대상에 포함
+   - 기존 파일들의 `expiration_date` 제한 해제 (크레딧이 있으면 계속 보관 가능)
 
-### 2.4. 보관료 자동 차감 로직 (스케줄러)
+### 2.4. 파일 상태 및 사용자 안내
+
+#### 파일 상태별 UI 안내
+
+**보관료 없는 파일 (`is_prepaid_linked = FALSE`):**
+```
+📁 파일명: document.pdf (100 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏰ 예상 삭제일: 2024-02-15 (25일 후)
+💡 장기 보관을 원하시나요?
+   크레딧을 충전하여 보관료를 활성화하세요
+   → 일일 보관료: $0.0005 | 월: $0.015
+   [크레딧 충전하기]
+```
+
+**보관료 있는 파일 (`is_prepaid_linked = TRUE`):**
+```
+📁 파일명: document.pdf (100 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ 보관료 활성화됨
+💰 일일 보관료: $0.0005
+📊 월 보관료: $0.015
+💳 현재 크레딧: $10
+⏱️ 보관 가능 기간: 약 20,000일
+```
+
+**보관료 부족 경고:**
+```
+⚠️ 보관료 잔액 부족 경고
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+현재 크레딧: $0.01
+예상 일일 보관료: $0.003
+⏰ 보관 가능 기간: 약 3일
+
+3일 후 파일들이 자동으로 잠금됩니다.
+계속 보관하려면 크레딧을 충전해주세요.
+[충전하기]
+```
+
+#### API 응답 예시
+
+**파일 목록 조회 (GET /api/files?walletAddress=0x...):**
+```json
+{
+  "files": [
+    {
+      "fileId": "...",
+      "fileName": "document.pdf",
+      "fileSize": 104857600,
+      "uploadDate": "2024-01-10T00:00:00Z",
+      "expirationDate": "2024-02-10T00:00:00Z",
+      "isPrepaidLinked": false,
+      "storageStatus": "free_storage",
+      "estimatedDeletionDate": "2024-02-10",
+      "daysUntilDeletion": 25,
+      "dailyStorageFee": 0.0005,
+      "monthlyStorageFee": 0.015
+    },
+    {
+      "fileId": "...",
+      "isPrepaidLinked": true,
+      "storageStatus": "prepaid_storage",
+      "creditBalance": 10,
+      "dailyStorageFee": 0.0005,
+      "daysCovered": 20000
+    }
+  ]
+}
+```
+
+**예상 보관료 조회 (GET /api/storage-fee/estimate?walletAddress=0x...):**
+```json
+{
+  "walletAddress": "0x...",
+  "creditBalance": 0,
+  "files": [
+    {
+      "fileId": "...",
+      "fileName": "document.pdf",
+      "fileSize": 104857600,
+      "dailyStorageFee": 0.0005,
+      "monthlyStorageFee": 0.015,
+      "expirationDate": "2024-02-10",
+      "daysUntilExpiration": 25
+    }
+  ],
+  "summary": {
+    "totalDailyFee": 0.0005,
+    "totalMonthlyFee": 0.015,
+    "daysCovered": 0,
+    "needsDeposit": true,
+    "message": "보관료는 일정 금액을 충전해두면 자동으로 차감됩니다."
+  }
+}
+```
+
+### 2.5. 보관료 자동 차감 로직 (스케줄러)
 
 서버에서 매일 자정에 실행되는 독립된 로직으로, M2M 환경에서 보관료를 자동 차감하고 서비스 지속성을 확보합니다.
 
+#### 스케줄러 처리 흐름
+
 1. **대상 조회**
    - DB에서 `is_prepaid_linked`가 **TRUE**인 모든 파일 레코드를 조회
+   - 보관료 없는 파일(`is_prepaid_linked = FALSE`)은 `expiration_date` 기준으로 삭제 처리
 
-2. **일일 보관료 계산**
+2. **일일 보관료 계산 및 차감** (보관료 활성화 파일만)
    - 파일 크기 기반으로 일일 보관료(`daily_storage_fee`) 계산
-
-3. **잔액 차감**
    - 해당 파일의 `uploader_wallet_id`에 맵핑된 `credit_balance`에서 `daily_storage_fee`를 자동 차감
 
-4. **잔액 고갈 및 경고**
+3. **잔액 고갈 및 경고**
    - 잔액이 3일치 예상 보관료 미만으로 떨어지면 Wallet ID에 "잔액 부족 경고" 알림 발송
    - 잔액이 **$0**이 되면: 해당 Wallet ID와 연결된 모든 파일에 대해 **`download_locked` 플래그를 TRUE**로 설정
    - 잠금 후 7일 유예 기간이 지나도 충전이 없으면 파일을 자동 삭제 처리
+
+4. **만료된 파일 삭제** (보관료 없는 파일)
+   - `is_prepaid_linked = FALSE`이고 `expiration_date`가 지난 파일 삭제
+   - 파일 시스템에서도 물리적으로 삭제
 
 ---
 
@@ -199,4 +318,42 @@ x402 프로토콜은 Monad 체인 기반 마이크로 결제를 위한 표준화
 | **결제 검증** | 서버 DB 확인 | Monad 체인 상 트랜잭션 확인 또는 EIP-712 서명 검증 |
 | **M2M 자동 결제** | 프라이빗 키를 서버에 저장하여 요청마다 서명 | 선불 충전된 크레딧 잔액 풀에서 고속 차감 (더 안전하고 효율적) |
 | **마이크로 결제** | 부적합 (최소 금액 제한) | x402 프로토콜로 최소 단위($0.0001)까지 지원 |
+
+---
+
+## 5. 📋 파일 관리 및 사용자 안내
+
+### 5.1. 파일 상태
+
+| 상태 | 설명 | 조건 |
+|------|------|------|
+| `free_storage` | 무료 보관 (30일) | `is_prepaid_linked = FALSE` |
+| `prepaid_storage` | 보관료 활성화됨 | `is_prepaid_linked = TRUE`, 크레딧 잔액 > 0 |
+| `locked` | 다운로드 잠금 | 크레딧 잔액 = 0, 7일 유예 기간 중 |
+| `expired` | 만료됨 | `expiration_date` 도달 또는 유예 기간 종료 |
+
+### 5.2. 사용자 안내 메시지
+
+**보관료 없는 유저:**
+- "30일 무료 보관이 제공됩니다. 장기 보관을 원하시면 크레딧을 충전하여 보관료를 활성화해주세요."
+- "예상 삭제일: YYYY-MM-DD (X일 후)"
+- "보관료는 일정 금액을 충전해두면 자동으로 차감됩니다."
+
+**보관료 있는 유저:**
+- "보관료가 활성화되어 크레딧으로 자동 차감됩니다."
+- "크레딧 잔액이 부족해지면 파일이 잠금됩니다."
+- "3일치 미만이면 경고 알림을 드립니다."
+
+### 5.3. 보관료 계산 공식
+
+```typescript
+// 일일 보관료 계산
+dailyStorageFee = (fileSizeInGB) × $0.005
+
+// 월 보관료 계산
+monthlyStorageFee = dailyStorageFee × 30
+
+// 보관 가능 기간 계산
+daysCovered = creditBalance / totalDailyFee
+```
 
