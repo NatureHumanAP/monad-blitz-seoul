@@ -1,0 +1,16 @@
+{
+    "chainId": "10143",
+    "network": "monadTestnet",
+    "deployedAt": "2025-11-15T07:14:12.890Z",
+    "deployer": "0x53520F3bd74Ad1d5d7950C5d3a75486FDf9ED924",
+    "contracts": {
+        "StorageCreditPool": {
+            "address": "0x002ad5d032Ba1D1254980da463A69F2C2e9138F7",
+            "paymentToken": "0x534b2f3A21130d7a60830c2Df862319e593943A3"
+        },
+        "PaymentContract": {
+            "address": "0x8ae2df7E7E3F8b5d340e53fDecfBEf761c7227EE",
+            "paymentToken": "0x534b2f3A21130d7a60830c2Df862319e593943A3"
+        }
+    }
+}

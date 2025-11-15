@@ -18,7 +18,7 @@ const config = {
         },
         monadTestnet: {
             url: process.env.MONAD_TESTNET_RPC_URL || "https://testnet-rpc.monad.xyz",
-            chainId: 41500,
+            chainId: 10143,
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
         },
         monadMainnet: {
@@ -41,7 +41,7 @@ const config = {
         customChains: [
             {
                 network: "monadTestnet",
-                chainId: 41500,
+                chainId: 10143,
                 urls: {
                     apiURL: "https://testnet-explorer.monad.xyz/api",
                     browserURL: "https://testnet-explorer.monad.xyz",

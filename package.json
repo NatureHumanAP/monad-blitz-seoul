@@ -3,10 +3,10 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev --webpack",
-        "build": "next build --webpack",
+        "dev": "next dev",
+        "build": "next build",
         "start": "next start",
-        "lint": "eslint . --fix"
+        "lint": "eslint"
     },
     "dependencies": {
         "ethers": "^6.15.0",
@@ -22,7 +22,6 @@
         "wagmi": "^2.19.4"
     },
     "devDependencies": {
-        "@stylistic/eslint-plugin": "^5.5.0",
         "@tailwindcss/postcss": "^4",
         "@types/node": "^20",
         "@types/react": "^19",

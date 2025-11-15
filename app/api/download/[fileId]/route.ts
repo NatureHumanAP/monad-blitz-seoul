@@ -1,49 +1,50 @@
-import { fileMetadata } from "@/services/metadata";
-import { createX402Headers, processDownloadPayment } from "@/services/payment";
-import { fileExists, getFileStream } from "@/services/storage";
-import { NextRequest, NextResponse } from "next/server";
+import { getMimeTypeFromFileName } from '@/lib/file-utils';
+import { fileMetadata } from '@/services/metadata';
+import { createX402Headers, processDownloadPayment } from '@/services/payment';
+import { fileExists, getFileStream } from '@/services/storage';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: Promise<{ fileId: string }> },
+    { params }: { params: Promise<{ fileId: string }> }
 ) {
     try {
         const { fileId } = await params;
         const headers = Object.fromEntries(
-            request.headers.entries(),
+            request.headers.entries()
         );
 
         // Get file metadata
         const metadata = await fileMetadata.getById(fileId);
         if (!metadata) {
             return NextResponse.json(
-                { error: "File not found" },
-                { status: 404 },
+                { error: 'File not found' },
+                { status: 404 }
             );
         }
 
         // Check if file exists in storage
         if (!(await fileExists(fileId))) {
             return NextResponse.json(
-                { error: "File not found in storage" },
-                { status: 404 },
+                { error: 'File not found in storage' },
+                { status: 404 }
             );
         }
 
         // Check if download is locked
         if (metadata.downloadLocked) {
             return NextResponse.json(
-                { error: "File download is locked. Please recharge your credits." },
-                { status: 403 },
+                { error: 'File download is locked. Please recharge your credits.' },
+                { status: 403 }
             );
         }
 
         // Get wallet ID from headers
-        const walletId = headers["x-wallet-id"] || headers["x-payment-wallet-id"];
+        const walletId = headers['x-wallet-id'] || headers['x-payment-wallet-id'];
         if (!walletId) {
             return NextResponse.json(
-                { error: "Wallet ID is required" },
-                { status: 400 },
+                { error: 'Wallet ID is required' },
+                { status: 400 }
             );
         }
 
@@ -52,7 +53,7 @@ export async function GET(
             walletId,
             fileId,
             metadata.fileSize,
-            headers,
+            headers
         );
 
         if (!paymentResult.success) {
@@ -65,26 +66,53 @@ export async function GET(
                 });
             }
             return NextResponse.json(
-                { error: "Payment required" },
-                { status: 402 },
+                { error: 'Payment required' },
+                { status: 402 }
             );
         }
 
         // Payment successful - stream file
         const fileStream = await getFileStream(fileId);
 
-        return new NextResponse(fileStream as any, {
+        // Get MIME type from file extension
+        const contentType = getMimeTypeFromFileName(metadata.fileName);
+
+        // Encode filename for Content-Disposition header (RFC 5987)
+        // Extract file extension to preserve it
+        const fileExt = metadata.fileName.includes('.')
+            ? metadata.fileName.substring(metadata.fileName.lastIndexOf('.'))
+            : '';
+
+        // Create ASCII-safe fallback filename (preserve extension)
+        // Replace non-ASCII characters with underscore, but keep extension
+        const baseName = fileExt
+            ? metadata.fileName.substring(0, metadata.fileName.lastIndexOf('.'))
+            : metadata.fileName;
+        const asciiBaseName = baseName.replace(/[^\x20-\x7E]/g, '_') || 'download';
+        const asciiSafeFileName = asciiBaseName + fileExt;
+
+        // Encode filename for filename* parameter (already ASCII-safe after encoding)
+        const encodedFileName = encodeURIComponent(metadata.fileName);
+
+        // Build Content-Disposition header
+        // Use both filename (ASCII-safe) and filename* (UTF-8 encoded) for maximum compatibility
+        // The filename* value is already ASCII-safe after encodeURIComponent
+        const contentDisposition = `attachment; filename="${asciiSafeFileName}"; filename*=UTF-8''${encodedFileName}`;
+
+        // Use Response constructor to avoid NextResponse header encoding issues
+        return new Response(fileStream as any, {
+            status: 200,
             headers: {
-                "Content-Type": "application/octet-stream",
-                "Content-Disposition": `attachment; filename="${metadata.fileName}"`,
-                "Content-Length": metadata.fileSize.toString(),
+                'Content-Type': contentType,
+                'Content-Disposition': contentDisposition,
+                'Content-Length': metadata.fileSize.toString(),
             },
         });
     } catch (error: any) {
-        console.error("Download error:", error);
+        console.error('Download error:', error);
         return NextResponse.json(
-            { error: "Failed to download file", details: error.message },
-            { status: 500 },
+            { error: 'Failed to download file', details: error.message },
+            { status: 500 }
         );
     }
 }

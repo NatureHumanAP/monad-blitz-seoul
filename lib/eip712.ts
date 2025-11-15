@@ -1,14 +1,14 @@
-import { ethers } from "ethers";
-import { BLOCKCHAIN_CONFIG } from "@/config/blockchain";
-import { PaymentMessage } from "@/lib/types/x402";
+import { BLOCKCHAIN_CONFIG } from '@/config/blockchain';
+import { PaymentMessage } from '@/lib/types/x402';
+import { ethers } from 'ethers';
 
 /**
  * EIP-712 Domain for payment messages
  */
 function getDomain() {
     return {
-        name: "Nano Storage",
-        version: "1",
+        name: 'Nano Storage',
+        version: '1',
         chainId: parseInt(BLOCKCHAIN_CONFIG.chainId),
         verifyingContract: BLOCKCHAIN_CONFIG.contracts.paymentContract,
     };
@@ -19,10 +19,10 @@ function getDomain() {
  */
 const PAYMENT_TYPES = {
     Payment: [
-        { name: "fileId", type: "string" },
-        { name: "amount", type: "uint256" },
-        { name: "nonce", type: "string" },
-        { name: "timestamp", type: "uint256" },
+        { name: 'fileId', type: 'string' },
+        { name: 'amount', type: 'uint256' },
+        { name: 'nonce', type: 'string' },
+        { name: 'timestamp', type: 'uint256' },
     ],
 };
 
@@ -32,20 +32,35 @@ const PAYMENT_TYPES = {
 export async function verifyPaymentSignature(
     message: PaymentMessage,
     signature: string,
-    expectedWalletId: string,
+    expectedWalletId: string
 ): Promise<boolean> {
     try {
         const domain = getDomain();
+
+        // Convert amount to wei (BigInt) for uint256 type
+        const amountInWei = BigInt(Math.floor(message.amount * 1e18));
+
+        // Convert timestamp to BigInt for uint256 type
+        const timestampBigInt = BigInt(message.timestamp);
+
+        // Create message with proper types for EIP-712
+        const typedMessage = {
+            fileId: message.fileId,
+            amount: amountInWei,
+            nonce: message.nonce,
+            timestamp: timestampBigInt,
+        };
+
         const recoveredAddress = ethers.verifyTypedData(
             domain,
             PAYMENT_TYPES,
-            message,
-            signature,
+            typedMessage,
+            signature
         );
 
         return recoveredAddress.toLowerCase() === expectedWalletId.toLowerCase();
     } catch (error) {
-        console.error("EIP-712 signature verification error:", error);
+        console.error('EIP-712 signature verification error:', error);
         return false;
     }
 }
@@ -56,13 +71,13 @@ export async function verifyPaymentSignature(
 export function verifyWalletSignature(
     message: string,
     signature: string,
-    expectedWalletId: string,
+    expectedWalletId: string
 ): boolean {
     try {
         const recoveredAddress = ethers.verifyMessage(message, signature);
         return recoveredAddress.toLowerCase() === expectedWalletId.toLowerCase();
     } catch (error) {
-        console.error("Wallet signature verification error:", error);
+        console.error('Wallet signature verification error:', error);
         return false;
     }
 }

@@ -1,12 +1,12 @@
-import { createHash } from "crypto";
-import path from "path";
-import { STORAGE_CONFIG } from "@/config/storage";
+import { STORAGE_CONFIG } from '@/config/storage';
+import { createHash } from 'crypto';
+import path from 'path';
 
 /**
  * Generate file ID from file buffer using SHA-256
  */
 export function generateFileId(fileBuffer: Buffer): string {
-    return createHash("sha256").update(fileBuffer).digest("hex");
+    return createHash('sha256').update(fileBuffer).digest('hex');
 }
 
 /**
@@ -38,5 +38,33 @@ export function isValidFileType(mimeType: string): boolean {
  */
 export function isValidFileSize(fileSize: number): boolean {
     return fileSize > 0 && fileSize <= STORAGE_CONFIG.maxFileSize;
+}
+
+/**
+ * Get MIME type from file extension
+ */
+export function getMimeTypeFromFileName(fileName: string): string {
+    const ext = path.extname(fileName).toLowerCase();
+    const mimeTypes: Record<string, string> = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.svg': 'image/svg+xml',
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xls': 'application/vnd.ms-excel',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.ppt': 'application/vnd.ms-powerpoint',
+        '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        '.txt': 'text/plain',
+        '.csv': 'text/csv',
+        '.json': 'application/json',
+        '.xml': 'application/xml',
+    };
+
+    return mimeTypes[ext] || 'application/octet-stream';
 }
 

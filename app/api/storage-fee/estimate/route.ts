@@ -1,18 +1,18 @@
-import { calculateDailyStorageFee, calculateDaysCovered, calculateMonthlyStorageFee } from "@/lib/pricing";
-import { FileListItem } from "@/lib/types/api";
-import { getCreditBalance } from "@/services/credit";
-import { fileMetadata } from "@/services/metadata";
-import { NextRequest, NextResponse } from "next/server";
+import { calculateDailyStorageFee, calculateDaysCovered, calculateMonthlyStorageFee } from '@/lib/pricing';
+import { FileListItem } from '@/lib/types/api';
+import { getCreditBalance } from '@/services/credit';
+import { fileMetadata } from '@/services/metadata';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
-        const walletAddress = searchParams.get("walletAddress");
+        const walletAddress = searchParams.get('walletAddress');
 
         if (!walletAddress) {
             return NextResponse.json(
-                { error: "walletAddress query parameter is required" },
-                { status: 400 },
+                { error: 'walletAddress query parameter is required' },
+                { status: 400 }
             );
         }
 
@@ -27,15 +27,15 @@ export async function GET(request: NextRequest) {
             const expirationDate = new Date(file.expirationDate);
             const daysUntilDeletion = Math.max(0, Math.ceil((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
-            let storageStatus: "free_storage" | "prepaid_storage" | "locked" | "expired";
+            let storageStatus: 'free_storage' | 'prepaid_storage' | 'locked' | 'expired';
             if (file.downloadLocked) {
-                storageStatus = "locked";
+                storageStatus = 'locked';
             } else if (file.isPrepaidLinked && creditBalance > 0) {
-                storageStatus = "prepaid_storage";
+                storageStatus = 'prepaid_storage';
             } else if (expirationDate < now) {
-                storageStatus = "expired";
+                storageStatus = 'expired';
             } else {
-                storageStatus = "free_storage";
+                storageStatus = 'free_storage';
             }
 
             const result: FileListItem = {
@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
                 monthlyStorageFee: monthlyFee,
             };
 
-            if (storageStatus === "free_storage") {
-                result.estimatedDeletionDate = expirationDate.toISOString().split("T")[0];
+            if (storageStatus === 'free_storage') {
+                result.estimatedDeletionDate = expirationDate.toISOString().split('T')[0];
                 result.daysUntilDeletion = daysUntilDeletion;
             }
 
@@ -72,14 +72,14 @@ export async function GET(request: NextRequest) {
                 totalMonthlyFee,
                 daysCovered,
                 needsDeposit: creditBalance === 0 || daysCovered < 3,
-                message: "보관료는 일정 금액을 충전해두면 자동으로 차감됩니다.",
+                message: '보관료는 일정 금액을 충전해두면 자동으로 차감됩니다.',
             },
         });
     } catch (error: any) {
-        console.error("Storage fee estimate error:", error);
+        console.error('Storage fee estimate error:', error);
         return NextResponse.json(
-            { error: "Failed to estimate storage fee", details: error.message },
-            { status: 500 },
+            { error: 'Failed to estimate storage fee', details: error.message },
+            { status: 500 }
         );
     }
 }

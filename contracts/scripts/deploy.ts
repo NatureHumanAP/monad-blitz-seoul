@@ -4,7 +4,18 @@ import * as path from "path";
 
 async function main() {
     const { ethers } = hre as any;
-    const [deployer] = await ethers.getSigners();
+
+    // 환경 변수에서 프라이빗키를 읽어서 특정 주소로 배포
+    let deployer;
+    if (process.env.PRIVATE_KEY) {
+        const privateKey = process.env.PRIVATE_KEY;
+        deployer = new ethers.Wallet(privateKey, ethers.provider);
+        console.log("Using deployer from PRIVATE_KEY environment variable");
+    } else {
+        const signers = await ethers.getSigners();
+        deployer = signers[0];
+        console.log("Using deployer from Hardhat config");
+    }
 
     console.log("Deploying contracts with the account:", deployer.address);
     console.log("Account balance:", (await ethers.provider.getBalance(deployer.address)).toString());
@@ -19,7 +30,7 @@ async function main() {
 
     // StorageCreditPool 배포
     console.log("\nDeploying StorageCreditPool...");
-    const StorageCreditPool = await ethers.getContractFactory("StorageCreditPool");
+    const StorageCreditPool = await ethers.getContractFactory("StorageCreditPool", deployer);
     const storageCreditPool = await StorageCreditPool.deploy(paymentTokenAddress);
     await storageCreditPool.waitForDeployment();
     const storageCreditPoolAddress = await storageCreditPool.getAddress();
@@ -27,7 +38,7 @@ async function main() {
 
     // PaymentContract 배포
     console.log("\nDeploying PaymentContract...");
-    const PaymentContract = await ethers.getContractFactory("PaymentContract");
+    const PaymentContract = await ethers.getContractFactory("PaymentContract", deployer);
     const paymentContract = await PaymentContract.deploy(paymentTokenAddress);
     await paymentContract.waitForDeployment();
     const paymentContractAddress = await paymentContract.getAddress();

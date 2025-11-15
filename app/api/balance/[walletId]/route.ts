@@ -1,23 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getCreditBalance } from "@/services/credit";
+import { getCreditBalance } from '@/services/credit';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: Promise<{ walletId: string }> },
+    { params }: { params: Promise<{ walletId: string }> }
 ) {
     try {
         const { walletId } = await params;
-        const balance = await getCreditBalance(walletId);
+        // Normalize walletId to lowercase (consistent with storage)
+        const normalizedWalletId = walletId.toLowerCase();
+        const balance = await getCreditBalance(normalizedWalletId);
 
         return NextResponse.json({
             walletId,
-            creditBalance: balance,
+            balance,
         });
     } catch (error: any) {
-        console.error("Balance query error:", error);
+        console.error('Balance query error:', error);
         return NextResponse.json(
-            { error: "Failed to get balance", details: error.message },
-            { status: 500 },
+            { error: 'Failed to get balance', details: error.message },
+            { status: 500 }
         );
     }
 }
