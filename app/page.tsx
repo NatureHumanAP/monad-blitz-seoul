@@ -1,5 +1,6 @@
 import { DepositSection } from "@/components/Deposit";
 import { DownloadSection } from "@/components/Download";
+import { FileListSection } from "@/components/FileList";
 import { Header } from "@/components/Header";
 import { UploadSection } from "@/components/Upload";
 
@@ -13,6 +14,7 @@ export default function Home() {
                     <DownloadSection />
                 </div>
                 <DepositSection />
+                <FileListSection />
                 <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/60 p-4 text-sm text-zinc-600 shadow-inner dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-300">
                     <div className="font-semibold text-zinc-800 dark:text-zinc-100">
                         요금 & 파일 상태 안내

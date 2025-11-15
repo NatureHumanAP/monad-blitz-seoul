@@ -26,6 +26,26 @@ export type DepositResponse = {
     message?: string;
 };
 
+export type FileListItem = {
+    fileId: string;
+    fileName: string;
+    fileSize: number;
+    uploadDate: string;
+    expirationDate: string;
+    isPrepaidLinked: boolean;
+    storageStatus: 'free_storage' | 'prepaid_storage' | 'locked' | 'expired';
+    estimatedDeletionDate?: string;
+    daysUntilDeletion?: number;
+    dailyStorageFee: number;
+    monthlyStorageFee: number;
+    creditBalance?: number;
+    daysCovered?: number;
+};
+
+export type FileListResponse = {
+    files: FileListItem[];
+};
+
 export class PaymentRequiredError extends Error {
     amount?: string;
     address?: string;
@@ -152,4 +172,12 @@ export async function depositCredits(params: {
         body: JSON.stringify(params),
     });
     return handleJson<DepositResponse>(res);
+}
+
+export async function fetchFileList(walletAddress: string): Promise<FileListResponse> {
+    const res = await fetch(
+        `/api/files?walletAddress=${encodeURIComponent(walletAddress)}`,
+        { method: "GET" }
+    );
+    return handleJson<FileListResponse>(res);
 }

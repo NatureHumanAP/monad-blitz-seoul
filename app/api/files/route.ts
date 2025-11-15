@@ -20,6 +20,11 @@ export async function GET(request: NextRequest) {
     const files = await fileMetadata.getByWalletId(walletAddress);
     const creditBalance = await getCreditBalance(walletAddress);
 
+    // Calculate total daily fee for all prepaid files
+    const totalDailyFee = files
+      .filter(f => f.isPrepaidLinked)
+      .reduce((sum, f) => sum + calculateDailyStorageFee(f.fileSize), 0);
+
     const now = new Date();
     const fileList: FileListItem[] = files.map((file) => {
       const dailyFee = calculateDailyStorageFee(file.fileSize);
@@ -58,11 +63,15 @@ export async function GET(request: NextRequest) {
 
       if (storageStatus === 'prepaid_storage') {
         result.creditBalance = creditBalance;
-        // Calculate total daily fee for all files
-        const totalDailyFee = files
-          .filter(f => f.isPrepaidLinked)
-          .reduce((sum, f) => sum + calculateDailyStorageFee(f.fileSize), 0);
-        result.daysCovered = calculateDaysCovered(creditBalance, totalDailyFee);
+        
+        // Calculate days covered for this specific file
+        // If this file is prepaid, calculate how many days the credit balance can cover
+        // for this file individually (if it were the only file)
+        if (dailyFee > 0) {
+          result.daysCovered = calculateDaysCovered(creditBalance, dailyFee);
+        } else {
+          result.daysCovered = Infinity;
+        }
       }
 
       return result;

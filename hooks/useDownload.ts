@@ -212,7 +212,8 @@ export function useDownload() {
             downloadUrl,
             error,
             x402Info,
+            currentFileId,
         }),
-        [isDownloading, isSigning, startDownload, processPayment, downloadUrl, error, x402Info]
+        [isDownloading, isSigning, startDownload, processPayment, downloadUrl, error, x402Info, currentFileId]
     );
 }
