@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/storage-fee",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
+
